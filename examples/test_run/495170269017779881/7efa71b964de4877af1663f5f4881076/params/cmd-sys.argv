@@ -1,0 +1,1 @@
+/root/miniconda3/envs/qlib-dev/bin/qrun benchmarks/LightGBM/workflow_config_lightgbm_Alpha158.yaml LightGBM test_run

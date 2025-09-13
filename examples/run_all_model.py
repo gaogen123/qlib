@@ -55,24 +55,26 @@ def cal_mean_std(results) -> dict:
     for fn in results:
         mean_std[fn] = dict()
         for metric in results[fn]:
-            mean = statistics.mean(results[fn][metric]) if len(results[fn][metric]) > 1 else results[fn][metric][0]
-            std = statistics.stdev(results[fn][metric]) if len(results[fn][metric]) > 1 else 0
-            mean_std[fn][metric] = [mean, std]
+            if len(results[fn][metric]) > 0:
+                mean = statistics.mean(results[fn][metric]) if len(results[fn][metric]) > 1 else results[fn][metric][0]
+                std = statistics.stdev(results[fn][metric]) if len(results[fn][metric]) > 1 else 0
+                mean_std[fn][metric] = [mean, std]
+            else:
+                # Handle empty lists
+                mean_std[fn][metric] = [0.0, 0.0]
     return mean_std
 
 
 # function to create the environment ofr an anaconda environment
 def create_env():
-    # create env
-    temp_dir = tempfile.mkdtemp()
-    env_path = Path(temp_dir).absolute()
-    sys.stderr.write(f"Creating Virtual Environment with path: {env_path}...\n")
-    execute(f"conda create --prefix {env_path} python=3.7 -y")
-    python_path = env_path / "bin" / "python"  # TODO: FIX ME!
+    # use existing qlib-dev conda environment
+    env_path = Path("/root/miniconda3/envs/qlib-dev").absolute()
+    python_path = env_path / "bin" / "python"
+    sys.stderr.write(f"Using existing conda environment: {env_path}...\n")
     sys.stderr.write("\n")
     # get anaconda activate path
-    conda_activate = Path(os.environ["CONDA_PREFIX"]) / "bin" / "activate"  # TODO: FIX ME!
-    return temp_dir, env_path, python_path, conda_activate
+    conda_activate = Path(os.environ["CONDA_PREFIX"]) / "bin" / "activate"
+    return None, env_path, python_path, conda_activate
 
 
 # function to execute the cmd
@@ -178,7 +180,7 @@ def gen_and_save_md_table(metrics, dataset):
         ar = metrics[fn]["annualized_return_with_cost"]
         ir = metrics[fn]["information_ratio_with_cost"]
         md = metrics[fn]["max_drawdown_with_cost"]
-        table += f"| {fn} | {dataset} | {ic[0]:5.4f}±{ic[1]:2.2f} | {icir[0]:5.4f}±{icir[1]:2.2f}| {ric[0]:5.4f}±{ric[1]:2.2f} | {ricir[0]:5.4f}±{ricir[1]:2.2f} | {ar[0]:5.4f}±{ar[1]:2.2f} | {ir[0]:5.4f}±{ir[1]:2.2f}| {md[0]:5.4f}±{md[1]:2.2f} |\n"
+        table += f"| {fn} | {dataset} | {ic[0]:5.4f}±{ic[1]:2.2f} | {icir[0]:5.4f}±{icir[1]:2.2f} | {ric[0]:5.4f}±{ric[1]:2.2f} | {ricir[0]:5.4f}±{ricir[1]:2.2f} | {ar[0]:5.4f}±{ar[1]:2.2f} | {ir[0]:5.4f}±{ir[1]:2.2f} | {md[0]:5.4f}±{md[1]:2.2f} |\n"
     pprint(table)
     with open("table.md", "w") as f:
         f.write(table)
@@ -208,13 +210,16 @@ def gen_yaml_file_without_seed_kwargs(yaml_path, temp_dir):
 class ModelRunner:
     def _init_qlib(self, exp_folder_name):
         # init qlib
-        GetData().qlib_data(exists_skip=True)
+        # Use existing data directory instead of downloading
+        provider_uri = "~/.qlib/qlib_data/cn_data"
         qlib.init(
+            provider_uri=provider_uri,
+            region="cn",
             exp_manager={
-                "class": "MLflowExpManager",
+                "class": "LocalExpManager",
                 "module_path": "qlib.workflow.expm",
                 "kwargs": {
-                    "uri": "file:" + str(Path(os.getcwd()).resolve() / exp_folder_name),
+                    "uri": str(Path(os.getcwd()).resolve() / exp_folder_name),
                     "default_exp_name": "Experiment",
                 },
             }
@@ -317,25 +322,13 @@ class ModelRunner:
             # create env by anaconda
             temp_dir, env_path, python_path, conda_activate = create_env()
 
-            # install requirements.txt
-            sys.stderr.write("Installing requirements.txt...\n")
-            with open(req_path) as f:
-                content = f.read()
-            if "torch" in content:
-                # automatically install pytorch according to nvidia's version
-                execute(
-                    f"{python_path} -m pip install light-the-torch", wait_when_err=wait_when_err
-                )  # for automatically installing torch according to the nvidia driver
-                execute(
-                    f"{env_path / 'bin' / 'ltt'} install --install-cmd '{python_path} -m pip install {{packages}}' -- -r {req_path}",
-                    wait_when_err=wait_when_err,
-                )
-            else:
-                execute(f"{python_path} -m pip install -r {req_path}", wait_when_err=wait_when_err)
+            # skip requirements.txt installation since we're using existing conda environment
+            sys.stderr.write("Skipping requirements.txt installation (using existing conda environment)...\n")
             sys.stderr.write("\n")
 
             # read yaml, remove seed kwargs of model, and then save file in the temp_dir
-            yaml_path = gen_yaml_file_without_seed_kwargs(yaml_path, temp_dir)
+            if temp_dir:
+                yaml_path = gen_yaml_file_without_seed_kwargs(yaml_path, temp_dir)
             # setup gpu for tft
             if fn == "TFT":
                 execute(
@@ -343,20 +336,8 @@ class ModelRunner:
                     wait_when_err=wait_when_err,
                 )
                 sys.stderr.write("\n")
-            # install qlib
-            sys.stderr.write("Installing qlib...\n")
-            execute(f"{python_path} -m pip install --upgrade pip", wait_when_err=wait_when_err)  # TODO: FIX ME!
-            execute(f"{python_path} -m pip install --upgrade cython", wait_when_err=wait_when_err)  # TODO: FIX ME!
-            if fn == "TFT":
-                execute(
-                    f"cd {env_path} && {python_path} -m pip install --upgrade --force-reinstall --ignore-installed PyYAML -e {qlib_uri}",
-                    wait_when_err=wait_when_err,
-                )  # TODO: FIX ME!
-            else:
-                execute(
-                    f"cd {env_path} && {python_path} -m pip install --upgrade --force-reinstall -e {qlib_uri}",
-                    wait_when_err=wait_when_err,
-                )  # TODO: FIX ME!
+            # skip qlib installation since we're using existing conda environment
+            sys.stderr.write("Skipping qlib installation (using existing conda environment)...\n")
             sys.stderr.write("\n")
             # run workflow_by_config for multiple times
             for i in range(times):
@@ -370,11 +351,12 @@ class ModelRunner:
                     _errs.update({i: errs})
                     errors[fn] = _errs
                 sys.stderr.write("\n")
-            # remove env
-            sys.stderr.write(f"Deleting the environment: {env_path}...\n")
-            if wait_before_rm_env:
-                input("Press Enter to Continue")
-            shutil.rmtree(env_path)
+            # cleanup temporary files if any
+            if temp_dir:
+                sys.stderr.write(f"Cleaning up temporary files: {temp_dir}...\n")
+                if wait_before_rm_env:
+                    input("Press Enter to Continue")
+                shutil.rmtree(temp_dir)
         # print errors
         sys.stderr.write(f"Here are some of the errors of the models...\n")
         pprint(errors)

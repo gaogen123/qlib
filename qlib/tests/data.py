@@ -9,10 +9,14 @@ import shutil
 import zipfile
 import requests
 import datetime
+import urllib3
 from tqdm import tqdm
 from pathlib import Path
 from loguru import logger
 from qlib.utils import exists_qlib_data
+
+# 禁用SSL警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class GetData:
@@ -53,7 +57,7 @@ class GetData:
             The location where the data is saved, including the file name.
         """
         file_name = str(target_path).rsplit("/", maxsplit=1)[-1]
-        resp = requests.get(url, stream=True, timeout=60)
+        resp = requests.get(url, stream=True, timeout=60, verify=False)
         resp.raise_for_status()
         if resp.status_code != 200:
             raise requests.exceptions.HTTPError()
@@ -110,7 +114,7 @@ class GetData:
 
     def check_dataset(self, file_name: str):
         url = self.merge_remote_url(file_name)
-        resp = requests.get(url, stream=True, timeout=60)
+        resp = requests.get(url, stream=True, timeout=60, verify=False)
         status = True
         if resp.status_code == 404:
             status = False
