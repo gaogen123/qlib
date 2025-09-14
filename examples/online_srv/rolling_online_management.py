@@ -28,7 +28,7 @@ class RollingOnlineExample:
         provider_uri="~/.qlib/qlib_data/cn_data",
         region="cn",
         trainer=DelayTrainerRM(),  # you can choose from TrainerR, TrainerRM, DelayTrainerR, DelayTrainerRM
-        task_url="mongodb://10.0.0.4:27017/",  # not necessary when using TrainerR or DelayTrainerR
+        task_url="mongodb://localhost:27017/",  # not necessary when using TrainerR or DelayTrainerR
         task_db_name="rolling_db",  # not necessary when using TrainerR or DelayTrainerR
         rolling_step=550,
         tasks=None,

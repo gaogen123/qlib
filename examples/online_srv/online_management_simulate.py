@@ -27,7 +27,7 @@ class OnlineSimulationExample:
         provider_uri="~/.qlib/qlib_data/cn_data",
         region="cn",
         exp_name="rolling_exp",
-        task_url="mongodb://10.0.0.4:27017/",  # not necessary when using TrainerR or DelayTrainerR
+        task_url="mongodb://localhost:27017/",  # not necessary when using TrainerR or DelayTrainerR
         task_db_name="rolling_db",  # not necessary when using TrainerR or DelayTrainerR
         task_pool="rolling_task",
         rolling_step=80,
