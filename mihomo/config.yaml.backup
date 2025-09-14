@@ -1,0 +1,162 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: global
+log-level: info
+ipv6: false
+
+# API配置
+external-controller: 127.0.0.1:9090
+external-ui: ./ui
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: redir-host
+  nameserver:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 114.114.114.114
+
+# 订阅链接配置
+proxy-providers:
+  subscription:
+    type: http
+    path: ./subscription.yaml
+    url: 'https://fba02.fbsubcn01.cc:2096/flydsubal/muknbkutnflppdxr?sub=2&extend=1'
+    interval: 3600
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300
+
+proxies:
+  - name: "direct"
+    type: direct
+
+proxy-groups:
+  - name: "PROXY"
+    type: select
+    use:
+      - subscription
+    proxies:
+      # 香港节点
+      - Hong Kong-01
+      - Hong Kong-02
+      - Hong Kong-03
+      - Hong Kong-04
+      - Hong Kong-05
+      - Hong Kong-06
+      - Hong Kong-07
+      - Hong Kong-08
+      - Hong Kong-09
+      - Hong Kong-10
+      - Hong Kong-11
+      - Hong Kong-12
+      - Hong Kong-13
+      - Hong Kong-14
+      - Hong Kong-15
+      - Hong Kong-16
+      - Hong Kong-17
+      - Hong Kong-18
+      - Hong Kong-19
+      - Hong Kong-20
+      # 台湾节点
+      - Taiwan-01
+      - Taiwan-02
+      - Taiwan-03
+      - Taiwan-04
+      - Taiwan-05
+      - Taiwan-06
+      - Taiwan-07
+      - Taiwan-08
+      - Taiwan-09
+      - Taiwan-10
+      # 日本节点
+      - Japan-01
+      - Japan-02
+      - Japan-03
+      - Japan-04
+      - Japan-05
+      - Japan-06
+      - Japan-07
+      - Japan-08
+      - Japan-09
+      - Japan-10
+      # 新加坡节点
+      - Singapore-01
+      - Singapore-02
+      - Singapore-03
+      - Singapore-04
+      - Singapore-05
+      - Singapore-06
+      - Singapore-07
+      - Singapore-08
+      - Singapore-09
+      - Singapore-10
+      # 美国节点
+      - USA-01
+      - USA-02
+      - USA-03
+      - USA-04
+      - USA-05
+      - USA-06
+      - USA-07
+      - USA-08
+      - USA-09
+      - USA-10
+      # 英国节点
+      - UK-01
+      - UK-02
+      - UK-03
+      - UK-04
+      - UK-05
+      # 马来西亚节点
+      - Malaysia-01
+      - Malaysia-02
+      - Malaysia-03
+      - Malaysia-04
+      - Malaysia-05
+      # 土耳其节点
+      - Turkey-01
+      - Turkey-02
+      # 阿根廷节点
+      - Argentina-01
+      - Argentina-02
+      # 智能选择模式
+      - auto
+      - fallback
+
+  - name: "auto"
+    type: url-test
+    use:
+      - subscription
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+
+  - name: "fallback"
+    type: fallback
+    use:
+      - subscription
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+# 全局模式下不需要规则配置
+# rules:
+#   - DOMAIN-SUFFIX,google.com,PROXY
+#   - DOMAIN-SUFFIX,facebook.com,PROXY
+#   - DOMAIN-SUFFIX,youtube.com,PROXY
+#   - DOMAIN-SUFFIX,twitter.com,PROXY
+#   - DOMAIN-SUFFIX,github.com,PROXY
+#   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
+#   - DOMAIN-SUFFIX,netflix.com,PROXY
+#   - DOMAIN-SUFFIX,disney.com,PROXY
+#   - DOMAIN-SUFFIX,amazon.com,PROXY
+#   - DOMAIN-SUFFIX,cloudflare.com,PROXY
+#   - DOMAIN-SUFFIX,openai.com,PROXY
+#   - DOMAIN-SUFFIX,anthropic.com,PROXY
+#   - DOMAIN-SUFFIX,claude.ai,PROXY
+#   - DOMAIN-SUFFIX,googleapis.com,PROXY
+#   - DOMAIN-SUFFIX,googlevideo.com,PROXY
+#   - MATCH,direct

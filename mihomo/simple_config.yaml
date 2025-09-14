@@ -1,0 +1,59 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: global
+log-level: info
+ipv6: false
+
+# API配置
+external-controller: 127.0.0.1:9090
+external-ui: ./ui
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: redir-host
+  nameserver:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 114.114.114.114
+
+# 直接配置代理节点
+proxies:
+  - name: "direct"
+    type: direct
+    
+  - name: "trojan-hk"
+    type: trojan
+    server: fbnode-all.6pzfwf.com
+    port: 56201
+    password: 5f7bf559-9305-33a9-8a02-477fde17fce9
+    udp: true
+    sni: fbnode-all.6pzfwf.com
+    skip-cert-verify: true
+    # 额外的SSL配置
+    tls: true
+    insecure-skip-verify: true
+
+proxy-groups:
+  - name: "PROXY"
+    type: select
+    proxies:
+      - trojan-hk
+      - direct
+
+  - name: "auto"
+    type: url-test
+    proxies:
+      - trojan-hk
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+
+  - name: "fallback"
+    type: fallback
+    proxies:
+      - trojan-hk
+      - direct
+    url: http://www.gstatic.com/generate_204
+    interval: 300

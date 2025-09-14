@@ -1,0 +1,42 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: global
+log-level: info
+ipv6: false
+
+# API配置
+external-controller: 127.0.0.1:9090
+external-ui: ./ui
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: redir-host
+  nameserver:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 114.114.114.114
+
+# 订阅链接配置
+proxy-providers:
+  subscription:
+    type: http
+    path: ./subscription.yaml
+    url: 'https://fba02.fbsubcn01.cc:2096/flydsubal/muknbkutnflppdxr?sub=2&extend=1'
+    interval: 3600
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300
+
+proxies:
+  - name: "direct"
+    type: direct
+
+proxy-groups:
+  - name: "PROXY"
+    type: select
+    use:
+      - subscription
+    proxies:

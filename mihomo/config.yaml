@@ -1,0 +1,81 @@
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: global
+log-level: info
+ipv6: false
+
+# API配置
+external-controller: 127.0.0.1:9090
+external-ui: ./ui
+
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: redir-host
+  nameserver:
+    - 8.8.8.8
+    - 8.8.4.4
+    - 114.114.114.114
+
+# 订阅链接配置
+proxy-providers:
+  subscription:
+    type: file
+    path: ./subscription.yaml
+    # url: 'https://fba02.fbsubcn01.cc:2096/flydsubal/muknbkutnflppdxr?sub=2&extend=1'
+    # interval: 3600
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300
+    # 禁用SSL证书验证
+    skip-cert-verify: true
+
+proxies:
+  - name: "direct"
+    type: direct
+
+proxy-groups:
+  - name: "PROXY"
+    type: select
+    use:
+      - subscription
+    proxies:
+      # 智能选择模式（默认选择）
+      - auto
+      - fallback
+
+  - name: "auto"
+    type: url-test
+    use:
+      - subscription
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+
+  - name: "fallback"
+    type: fallback
+    use:
+      - subscription
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+
+# 全局模式下不需要规则配置
+# rules:
+#   - DOMAIN-SUFFIX,google.com,PROXY
+#   - DOMAIN-SUFFIX,facebook.com,PROXY
+#   - DOMAIN-SUFFIX,youtube.com,PROXY
+#   - DOMAIN-SUFFIX,twitter.com,PROXY
+#   - DOMAIN-SUFFIX,github.com,PROXY
+#   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
+#   - DOMAIN-SUFFIX,netflix.com,PROXY
+#   - DOMAIN-SUFFIX,disney.com,PROXY
+#   - DOMAIN-SUFFIX,amazon.com,PROXY
+#   - DOMAIN-SUFFIX,cloudflare.com,PROXY
+#   - DOMAIN-SUFFIX,openai.com,PROXY
+#   - DOMAIN-SUFFIX,anthropic.com,PROXY
+#   - DOMAIN-SUFFIX,claude.ai,PROXY
+#   - DOMAIN-SUFFIX,googleapis.com,PROXY
+#   - DOMAIN-SUFFIX,googlevideo.com,PROXY
+#   - MATCH,direct

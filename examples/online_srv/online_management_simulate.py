@@ -52,7 +52,7 @@ class OnlineSimulationExample:
             tasks (dict or list[dict]): a set of the task config waiting for rolling and training
         """
         if tasks is None:
-            tasks = [CSI100_RECORD_XGBOOST_TASK_CONFIG_ONLINE, CSI100_RECORD_LGB_TASK_CONFIG_ONLINE]
+            tasks = [CSI100_RECORD_LGB_TASK_CONFIG_ONLINE]  # 只使用LGB模型，避免xgboost依赖
         self.exp_name = exp_name
         self.task_pool = task_pool
         self.start_time = start_time
